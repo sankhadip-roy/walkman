@@ -32,6 +32,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="addSongs"
+        options={{
+          title: 'Add Songs',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

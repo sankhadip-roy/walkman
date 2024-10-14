@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Playlist } from '@/components/Playlist';
@@ -10,28 +11,25 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-// Update the Song type definition
 type Song = {
     id: string;
     title: string;
     artist: string;
-    uri: any;
+    uri: string;
 };
-
-// Update sampleSongs to use the Song type
-const sampleSongs: Song[] = [
-    { id: '1', title: 'Song 1', artist: 'Artist 1', uri: require('@/assets/audio/sample.mp3') },
-    { id: '2', title: 'Song 2', artist: 'Artist 2', uri: require('@/assets/audio/sample.mp3') },
-    { id: '3', title: 'Song 3', artist: 'Artist 3', uri: require('@/assets/audio/sample.mp3') },
-];
 
 export default function PlayerScreen() {
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [currentSong, setCurrentSong] = useState(sampleSongs[0]);
+    const [songs, setSongs] = useState<Song[]>([]);
+    const [currentSong, setCurrentSong] = useState<Song | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        loadSongs();
+    }, []);
 
     useEffect(() => {
         return sound
@@ -41,26 +39,51 @@ export default function PlayerScreen() {
             : undefined;
     }, [sound]);
 
+    const loadSongs = async () => {
+        try {
+            const storedSongs = await AsyncStorage.getItem('songs');
+            if (storedSongs) {
+                const parsedSongs = JSON.parse(storedSongs);
+                setSongs(parsedSongs);
+                if (parsedSongs.length > 0) {
+                    setCurrentSong(parsedSongs[0]);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading songs:', error);
+        }
+    };
+
     async function playSound(song = currentSong, index = currentIndex) {
+        if (!song || !song.uri) {
+            console.log('No song or song URI available');
+            return;
+        }
+
         if (sound) {
             await sound.unloadAsync();
         }
-        console.log('Loading Sound');
-        const { sound: newSound } = await Audio.Sound.createAsync(song.uri);
-        setSound(newSound);
-        setCurrentSong(song);
-        setCurrentIndex(index);
 
-        console.log('Playing Sound');
-        await newSound.playAsync();
-        setIsPlaying(true);
+        console.log('Loading Sound', song.uri);
+        try {
+            const { sound: newSound } = await Audio.Sound.createAsync({ uri: song.uri });
+            setSound(newSound);
+            setCurrentSong(song);
+            setCurrentIndex(index);
 
-        newSound.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded) {
-                setPosition(status.positionMillis);
-                setDuration(status.durationMillis || 0);
-            }
-        });
+            console.log('Playing Sound');
+            await newSound.playAsync();
+            setIsPlaying(true);
+
+            newSound.setOnPlaybackStatusUpdate((status) => {
+                if (status.isLoaded) {
+                    setPosition(status.positionMillis);
+                    setDuration(status.durationMillis || 0);
+                }
+            });
+        } catch (error) {
+            console.error('Error loading or playing sound:', error);
+        }
     }
 
     async function pauseSound() {
@@ -81,13 +104,13 @@ export default function PlayerScreen() {
     }
 
     function handlePrevious() {
-        const newIndex = (currentIndex - 1 + sampleSongs.length) % sampleSongs.length;
-        playSound(sampleSongs[newIndex], newIndex);
+        const newIndex = (currentIndex - 1 + songs.length) % songs.length;
+        playSound(songs[newIndex], newIndex);
     }
 
     function handleNext() {
-        const newIndex = (currentIndex + 1) % sampleSongs.length;
-        playSound(sampleSongs[newIndex], newIndex);
+        const newIndex = (currentIndex + 1) % songs.length;
+        playSound(songs[newIndex], newIndex);
     }
 
     return (
@@ -98,8 +121,8 @@ export default function PlayerScreen() {
             <View style={styles.contentContainer}>
                 <ThemedText style={styles.title}>Now Playing</ThemedText>
                 <View style={styles.songInfo}>
-                    <ThemedText style={styles.songTitle}>{currentSong.title}</ThemedText>
-                    <ThemedText style={styles.artistName}>{currentSong.artist}</ThemedText>
+                    <ThemedText style={styles.songTitle}>{currentSong?.title || 'No song selected'}</ThemedText>
+                    <ThemedText style={styles.artistName}>{currentSong?.artist || ''}</ThemedText>
                 </View>
                 <View style={styles.controls}>
                     <TouchableOpacity onPress={handlePrevious}>
@@ -134,7 +157,7 @@ export default function PlayerScreen() {
                 </View>
 
                 <ThemedText style={styles.playlistTitle}>Playlist</ThemedText>
-                <Playlist songs={sampleSongs} onSelectSong={handleSelectSong} />
+                <Playlist songs={songs} onSelectSong={handleSelectSong} />
             </View>
         </LinearGradient>
     );
