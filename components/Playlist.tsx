@@ -7,7 +7,7 @@ interface Song {
     id: string;
     title: string;
     artist: string;
-    uri: any;
+    uri: string;
 }
 
 interface PlaylistProps {
@@ -16,6 +16,13 @@ interface PlaylistProps {
 }
 
 export function Playlist({ songs, onSelectSong }: PlaylistProps) {
+    const getDisplayName = (uri: string) => {
+        // Extract file name from URI
+        const fileName = uri.split('/').pop() || '';
+        // Remove file extension and decode URI component
+        return decodeURIComponent(fileName.split('.').slice(0, -1).join('.'));
+    };
+
     return (
         <FlatList
             data={songs}
@@ -24,8 +31,12 @@ export function Playlist({ songs, onSelectSong }: PlaylistProps) {
                 <TouchableOpacity onPress={() => onSelectSong(item, index)}>
                     <ThemedView style={styles.songItem}>
                         <View style={styles.songInfo}>
-                            <ThemedText style={styles.songTitle}>{item.title}</ThemedText>
-                            <ThemedText style={styles.songArtist}>{item.artist}</ThemedText>
+                            <ThemedText style={styles.songTitle}>
+                                {item.title || getDisplayName(item.uri)}
+                            </ThemedText>
+                            <ThemedText style={styles.songArtist}>
+                                {item.artist || 'Unknown Artist'}
+                            </ThemedText>
                         </View>
                     </ThemedView>
                 </TouchableOpacity>

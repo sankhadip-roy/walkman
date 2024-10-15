@@ -8,6 +8,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Playlist } from '@/components/Playlist';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as FileSystem from 'expo-file-system';
+import { useSongs } from '@/components/SongsContext';
 
 const { width } = Dimensions.get('window');
 
@@ -19,17 +21,19 @@ type Song = {
 };
 
 export default function PlayerScreen() {
+    const { songs } = useSongs();
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [songs, setSongs] = useState<Song[]>([]);
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
-        loadSongs();
-    }, []);
+        if (songs.length > 0 && !currentSong) {
+            setCurrentSong(songs[0]);
+        }
+    }, [songs]);
 
     useEffect(() => {
         return sound
@@ -66,7 +70,24 @@ export default function PlayerScreen() {
 
         console.log('Loading Sound', song.uri);
         try {
-            const { sound: newSound } = await Audio.Sound.createAsync({ uri: song.uri });
+            let uri = song.uri;
+
+            // Check if the URI is a content URI
+            if (uri.startsWith('content://')) {
+                // Copy the file to app's cache directory
+                const fileInfo = await FileSystem.getInfoAsync(uri);
+                if (fileInfo.exists) {
+                    const fileName = uri.split('/').pop();
+                    const destination = `${FileSystem.cacheDirectory}${fileName}`;
+                    await FileSystem.copyAsync({
+                        from: uri,
+                        to: destination
+                    });
+                    uri = destination;
+                }
+            }
+
+            const { sound: newSound } = await Audio.Sound.createAsync({ uri });
             setSound(newSound);
             setCurrentSong(song);
             setCurrentIndex(index);

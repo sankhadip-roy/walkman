@@ -1,39 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-
-interface Song {
-    id: string;
-    title: string;
-    artist: string;
-    uri: string;
-}
+import { useSongs } from '@/components/SongsContext';
 
 export default function AddSongs() {
-    const [songs, setSongs] = useState<Song[]>([]);
+    const { songs, setSongs, loadSongs } = useSongs();
     const navigation = useNavigation();
 
-    useEffect(() => {
+    React.useEffect(() => {
         loadSongs();
     }, []);
 
-    const loadSongs = async () => {
-        try {
-            const storedSongs = await AsyncStorage.getItem('songs');
-            if (storedSongs) {
-                setSongs(JSON.parse(storedSongs));
-            }
-        } catch (error) {
-            console.error('Error loading songs:', error);
-            Alert.alert('Error', 'Failed to load songs');
-        }
-    };
-
-    const addSong = async () => {
+    const handleAddSong = async () => {
         try {
             console.log('Starting song selection...');
             const result = await DocumentPicker.getDocumentAsync({
@@ -44,10 +26,11 @@ export default function AddSongs() {
 
             if (result.assets && result.assets.length > 0) {
                 const asset = result.assets[0];
-                const newSong: Song = {
+                const fileName = asset.name.split('.').slice(0, -1).join('.');
+                const newSong = {
                     id: Date.now().toString(),
-                    title: asset.name,
-                    artist: 'Unknown',
+                    title: fileName,
+                    artist: 'Unknown Artist',
                     uri: asset.uri,
                 };
 
@@ -58,7 +41,7 @@ export default function AddSongs() {
                 setSongs(updatedSongs);
                 await AsyncStorage.setItem('songs', JSON.stringify(updatedSongs));
                 console.log('Songs saved to AsyncStorage');
-                Alert.alert('Success', `Added song: ${asset.name}`);
+                Alert.alert('Success', `Added song: ${fileName}`);
             } else {
                 console.log('User cancelled the picker or no asset was selected');
             }
@@ -68,15 +51,44 @@ export default function AddSongs() {
         }
     };
 
-    const goToPlayer = () => {
+    const handleGoToPlayer = () => {
         navigation.navigate('player');
+    };
+
+    const handleRemoveAllSongs = async () => {
+        Alert.alert(
+            "Remove All Songs",
+            "Are you sure you want to remove all songs?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "OK",
+                    onPress: async () => {
+                        try {
+                            await AsyncStorage.removeItem('songs');
+                            setSongs([]);
+                            Alert.alert('Success', 'All songs have been removed');
+                        } catch (error) {
+                            console.error('Error removing songs:', error);
+                            Alert.alert('Error', 'Failed to remove songs');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     return (
         <ThemedView style={styles.container}>
             <ThemedText style={styles.title}>Add Songs</ThemedText>
-            <TouchableOpacity style={styles.addButton} onPress={addSong}>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddSong}>
                 <ThemedText style={styles.addButtonText}>Add Song</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.removeButton} onPress={handleRemoveAllSongs}>
+                <ThemedText style={styles.removeButtonText}>Remove All Songs</ThemedText>
             </TouchableOpacity>
             <FlatList
                 data={songs}
@@ -87,7 +99,7 @@ export default function AddSongs() {
                     </ThemedView>
                 )}
             />
-            <TouchableOpacity style={styles.playerButton} onPress={goToPlayer}>
+            <TouchableOpacity style={styles.playerButton} onPress={handleGoToPlayer}>
                 <ThemedText style={styles.playerButtonText}>Go to Player</ThemedText>
             </TouchableOpacity>
         </ThemedView>
@@ -127,6 +139,16 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     playerButtonText: {
+        color: 'white',
+        textAlign: 'center',
+    },
+    removeButton: {
+        backgroundColor: '#d9534f',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 20,
+    },
+    removeButtonText: {
         color: 'white',
         textAlign: 'center',
     },
