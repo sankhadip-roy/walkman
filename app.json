@@ -2,7 +2,7 @@
   "expo": {
     "name": "walkman",
     "slug": "walkman",
-    "version": "0.6",
+    "version": "0.7",
     "orientation": "portrait",
     "icon": "./assets/images/music_app_icon.png",
     "scheme": "myapp",
@@ -11,12 +11,6 @@
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSDocumentsFolderUsageDescription": "This app needs access to the Documents folder to read and store music files."
-      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,14 +21,11 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "WAKE_LOCK",
+        "android.permission.FOREGROUND_SERVICE"
       ],
       "package": "app.sankhadiproy.walkman"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/music_app_icon.png"
     },
     "plugins": [
       "expo-router",
