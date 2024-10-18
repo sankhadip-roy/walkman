@@ -24,56 +24,57 @@ export default function AddSongs() {
 
   const handleAddSong = async () => {
     try {
-      console.log("Starting song selection...");
+      // console.log("Starting song selection..."); //log
       const result = await DocumentPicker.getDocumentAsync({
         type: "audio/*",
         copyToCacheDirectory: false,
       });
-      console.log("Document picker result:", result);
+      // console.log("Document picker result:", result); //log
 
       if (result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
+        // console.log("##asset:", asset); //log
         const fileName = asset.name.split(".").slice(0, -1).join(".");
         const newSong = {
           id: Date.now().toString(),
           title: fileName,
-          artist: "Unknown Artist",
+          artist: "can't add now",
           uri: asset.uri,
         };
 
-        console.log("New song object:", newSong);
+        // console.log("New song object:", newSong); //log
 
         const updatedSongs = [...songs, newSong];
-        console.log("Updated songs array:", updatedSongs);
+        // console.log("Updated songs array:", updatedSongs); //log
         setSongs(updatedSongs);
         await AsyncStorage.setItem("songs", JSON.stringify(updatedSongs));
-        console.log("Songs saved to AsyncStorage");
+        // console.log("Songs saved to AsyncStorage"); //log
         Alert.alert("Success", `Added song: ${fileName}`);
       } else {
-        console.log("User cancelled the picker or no asset was selected");
+        // console.log("User cancelled the picker or no asset was selected"); //log
       }
     } catch (error) {
-      console.error("Error adding song:", error);
+      // console.error("Error adding song:", error); //log
       Alert.alert("Error", "Failed to add song");
     }
   };
 
   const handleAddFolder = async () => {
     try {
-      console.log("Starting folder selection...");
+      // console.log("Starting folder selection..."); //log
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
         copyToCacheDirectory: false,
       });
-      console.log("Document picker result:", result);
+      // console.log("Document picker result:", result); //log
 
       if (result.assets && result.assets.length > 0) {
         const folderUri = result.assets[0].uri;
-        console.log("Selected folder URI:", folderUri);
+        // console.log("Selected folder URI:", folderUri); //log
 
         const folderInfo =
           await FileSystem.StorageAccessFramework.readDirectoryAsync(folderUri);
-        console.log("Folder contents:", folderInfo);
+        // console.log("Folder contents:", folderInfo); //log
 
         const audioFiles = folderInfo.filter(
           (file) =>
@@ -81,7 +82,7 @@ export default function AddSongs() {
             file.endsWith(".wav") ||
             file.endsWith(".m4a")
         );
-        console.log("Filtered audio files:", audioFiles);
+        // console.log("Filtered audio files:", audioFiles); //log
 
         const newSongs = audioFiles.map((file, index) => {
           const fileName = file
@@ -93,24 +94,24 @@ export default function AddSongs() {
           return {
             id: (Date.now() + index).toString(),
             title: fileName,
-            artist: "Unknown Artist",
+            artist: "can't add now",
             uri: `${folderUri}/${file}`,
           };
         });
 
-        console.log("New songs array:", newSongs);
+        // console.log("New songs array:", newSongs); //log
 
         const updatedSongs = [...songs, ...newSongs];
-        console.log("Updated songs array:", updatedSongs);
+        // console.log("Updated songs array:", updatedSongs); //log
         setSongs(updatedSongs);
         await AsyncStorage.setItem("songs", JSON.stringify(updatedSongs));
-        console.log("Songs saved to AsyncStorage");
+        // console.log("Songs saved to AsyncStorage"); //log
         Alert.alert("Success", `Added ${newSongs.length} songs from folder`);
       } else {
-        console.log("User cancelled the picker or no folder was selected");
+        // console.log("User cancelled the picker or no folder was selected"); //log
       }
     } catch (error) {
-      console.error("Error adding folder:", error);
+      // console.error("Error adding folder:", error); //log
       Alert.alert("Error", "Failed to add folder");
     }
   };
@@ -136,7 +137,7 @@ export default function AddSongs() {
               setSongs([]);
               Alert.alert("Success", "All songs have been removed");
             } catch (error) {
-              console.error("Error removing songs:", error);
+              // console.error("Error removing songs:", error); //log
               Alert.alert("Error", "Failed to remove songs");
             }
           },
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    paddingTop: 60, // Add this line to increase top padding
+    paddingTop: 60,
   },
   title: {
     fontSize: 24,
