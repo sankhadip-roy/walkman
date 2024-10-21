@@ -9,14 +9,14 @@ import {
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useSongs } from "@/components/SongsContext";
+import { useRouter } from "expo-router";
 
 export default function AddSongs() {
   const { songs, setSongs, loadSongs } = useSongs();
-  const navigation = useNavigation();
+  const router = useRouter();
 
   React.useEffect(() => {
     loadSongs();
@@ -117,7 +117,7 @@ export default function AddSongs() {
   };
 
   const handleGoToPlayer = () => {
-    navigation.navigate("player");
+    router.push("/player");
   };
 
   const handleRemoveAllSongs = async () => {
