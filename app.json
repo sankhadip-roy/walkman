@@ -2,7 +2,7 @@
   "expo": {
     "name": "walkman",
     "slug": "walkman",
-    "version": "0.7",
+    "version": "0.9",
     "orientation": "portrait",
     "icon": "./assets/images/music_app_icon.png",
     "scheme": "myapp",
